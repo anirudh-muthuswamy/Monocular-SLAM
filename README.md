@@ -32,7 +32,7 @@ A lightweight monocular SLAM system that extracts ORB features, estimates camera
 Install the required dependencies before running the project:
 
 ```bash
-pip install numpy opencv-python gtsam vtk scikit-image
+pip install numpy opencv-python gtsam vtk scikit-image pysdl2 pysdl2-dll
 ```
 
 ## Usage
@@ -47,16 +47,6 @@ pip install numpy opencv-python gtsam vtk scikit-image
    python main.py
    ```
 
-## Repository Name Suggestions
+### Acknowledgments
 
-Here are a few name options for your repository:
-
-- `monoslam`
-- `orb-slam-lite`
-- `mono-vo`
-- `slam-from-scratch`
-- `feature-based-slam`
-- `mono-sfm`
-
-Let me know if you want any refinements!
-
+Big thanks to https://github.com/geohot for the inspiration. This project builds upon ideas and implementations from their work.
