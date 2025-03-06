@@ -1,11 +1,9 @@
 import cv2
 import numpy as np
 from skimage.measure import ransac
+from utils import add_ones
 from skimage.transform import FundamentalMatrixTransform
 import g2o
-
-def add_ones(x):
-    return np.concatenate([x, np.ones((x.shape[0], 1))], axis=1)
 
 def extractPose(F):
     #Used for computing the rotation matrix
