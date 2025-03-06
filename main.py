@@ -107,7 +107,7 @@ if __name__ == "__main__":
     mapp = Map()
     mapp.create_viewer()
 
-    cap = cv2.VideoCapture("test_countryroad.mp4")
+    cap = cv2.VideoCapture("videos/test_countryroad.mp4")
     while cap.isOpened():
         ret, frame = cap.read()
         if ret == True:
