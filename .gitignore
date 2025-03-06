@@ -1,1 +1,9 @@
-pangolin/
+.vscode
+calib
+devkit
+poses
+dataset
+__pycache__
+videos
+*.ipynb
+*.zip
