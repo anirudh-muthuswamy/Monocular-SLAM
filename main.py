@@ -1,9 +1,70 @@
 import cv2
 import numpy as np
+import gtsam
 from pointmap import Map, Point
 from display import Display
 from extractor import Frame, match_frames, add_ones, denormalize
 from multiprocessing import set_start_method, active_children
+
+def pose3_to_matrix(pose3):
+    R = pose3.rotation().matrix()
+    t = pose3.translation()
+    T = np.eye(4)
+    T[:3, :3] = R
+    T[:3, 3] = t
+    return T
+
+def bundle_adjustment(pose1, pose2, pts4d, keypoints_2d, K):
+
+    #homoegenous coordinates [x,y,z,w] are converted to euclidean coordinates
+    pts3d_euc =  pts4d[:, :3] /pts4d[:, 3:]
+    
+    #convert intrinsic matrix to gtsam format
+    fx, fy, cx, cy = K[0,0], K[1,1], K[0,2], K[1, 2]
+    gtsam_K = gtsam.Cal3_S2(fx, fy, 0, cx, cy)
+
+    #initialize factor graph and values
+    graph = gtsam.NonlinearFactorGraph()
+    initial_estimates = gtsam.Values()
+
+    # Convert 4x4 transformation matrices to GTSAM Pose3
+    R1, t1 = pose1[:3, :3], pose1[:3, 3]
+    R2, t2 = pose2[:3, :3], pose2[:3, 3]
+    cam1_pose = gtsam.Pose3(gtsam.Rot3(R1), gtsam.Point3(t1))
+    cam2_pose = gtsam.Pose3(gtsam.Rot3(R2), gtsam.Point3(t2))
+
+    # Add camera poses to initial estimates
+    initial_estimates.insert(0, cam1_pose)
+    initial_estimates.insert(1, cam2_pose)
+
+    # Fix first camera to remove gauge freedom
+    graph.add(gtsam.PriorFactorPose3(0, cam1_pose, gtsam.noiseModel.Isotropic.Sigma(6, 1e-6)))
+
+    # Add 3D points to initial estimates
+    for i, point in enumerate(pts3d_euc):
+        initial_estimates.insert(i + 2, gtsam.Point3(point))
+
+   # Add reprojection factors
+    huber = gtsam.noiseModel.Robust.Create(
+        gtsam.noiseModel.mEstimator.Huber.Create(1.0),
+        gtsam.noiseModel.Isotropic.Sigma(2, 1.0)
+    )
+    for cam_idx, keypoints in enumerate(keypoints_2d):
+        for i, (u, v) in enumerate(keypoints):
+            point_key = i + 2
+            graph.add(gtsam.GenericProjectionFactorCal3_S2(
+                gtsam.Point2(u, v), huber, cam_idx, point_key, gtsam_K))
+
+    # Optimize
+    params = gtsam.LevenbergMarquardtParams()
+    optimizer = gtsam.LevenbergMarquardtOptimizer(graph, initial_estimates, params)
+    result = optimizer.optimize()
+
+    # Extract results
+    optimized_poses = [result.atPose3(i) for i in range(2)]
+    optimized_points = np.array([result.atPoint3(2 + i) for i in range(len(pts4d))])
+
+    return optimized_poses, optimized_points
 
 def triangulate(pose1, pose2, pts1, pts2):
     #initialize result array to store homogenous coordinates
@@ -45,8 +106,30 @@ def process_frame(img):
 
     pts4d = triangulate(f1.pose, f2.pose, f1.pts[idx1], f2.pts[idx2])
 
-    #homoegenous coordinates [x,y,z,w] are converted to euclidean coordinates
-    pts4d /= pts4d[:, 3:]
+    print("before optimization:\n")
+    print("pts4d:",pts4d[0:5])
+    print("euclidean:")
+    temp = pts4d / pts4d[:, 3:]
+    print(temp[0:5])
+    print("pose1")
+    print(f1.pose)
+    print("pose2")
+    print(f2.pose)
+
+    # Run Bundle Adjustment
+    optimized_poses, optimized_points = bundle_adjustment(f1.pose, f2.pose, pts4d, [f2.pts[idx2], f1.pts[idx1]], K)
+
+    # Update camera poses and 3D points with optimized values
+    # Convert optimized poses back to 4x4 transformation matrices
+    f1.pose = pose3_to_matrix(optimized_poses[0])
+    f2.pose = pose3_to_matrix(optimized_poses[1])
+
+    print("After optimization:\n", optimized_points[0:5])
+
+    pts4d = np.hstack((optimized_points, np.ones((optimized_points.shape[0], 1))))
+
+    print(pts4d[0:5])
+    print(f1.pose, f2.pose)
 
     # Reject points without enough "Parallax" and points behind the camera
     # returns, A boolean array indicating which points satisfy both criteria.
@@ -68,11 +151,11 @@ def process_frame(img):
         cv2.circle(img, (u1,v1), 3, (0,255,0))
         cv2.line(img, (u1,v1), (u2, v2), (255,0,0))
 
-    #2d display
-    display.paint(img)
+    # #2d display
+    # display.paint(img)
 
-    #3d display
-    mapp.display()
+    # #3d display
+    # mapp.display()
 
 
 def kill_all_processes_and_exit():
@@ -89,7 +172,6 @@ def kill_all_processes_and_exit():
     
     # Exit the program
     exit()
-
 
 if __name__ == "__main__":
     set_start_method('spawn')
