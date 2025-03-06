@@ -1,7 +1,6 @@
 from multiprocessing import Process, Queue
 import numpy as np
 import vtk
-from vtkmodules.util import numpy_support
 
 #Global visualization usng vtk
 class Map():
@@ -46,9 +45,9 @@ class Map():
 
         #set up camera
         self.camera = self.renderer.GetActiveCamera()
-        self.camera.SetPosition(0, -10, -8)
-        self.camera.SetFocalPoint(0, 0, 0)
-        self.camera.SetViewUp(0, -1, 0)
+        # self.camera.SetPosition(0, -10, -8)
+        # self.camera.SetFocalPoint(0, 0, 0)
+        # self.camera.SetViewUp(0, -1, 0)
 
         #Set up interactor style for 3D Navigation
         style = vtk.vtkInteractorStyleTrackballCamera()
@@ -72,7 +71,7 @@ class Map():
     def viewer_refresh(self, q: Queue):
         #check if there is new data in the queue
         if self.state is None or not q.empty():
-            self.state = q.get
+            self.state = q.get()
 
             # Update camera trajectory
             if len(self.state[0]) > 0:
@@ -106,7 +105,7 @@ class Map():
                 lines.InsertNextCell(line)
                 
             #add camera frustum visualization here
-            self._add_camera_frustum(pose, points, lines, i)
+            # self._add_camera_frustum(pose, points, lines, i)
         
         # Create a polydata object
         polydata = vtk.vtkPolyData()
@@ -120,7 +119,7 @@ class Map():
         # Set the actor properties
         self.camera_path_actor.SetMapper(mapper)
         self.camera_path_actor.GetProperty().SetColor(0.0, 1.0, 0.0)  # Green
-        self.camera_path_actor.GetProperty().SetLineWidth(2)
+        self.camera_path_actor.GetProperty().SetLineWidth(10)
 
     def _add_camera_frustum(self, pose, points, lines, base_index):
         # This is a simplified camera frustum 
@@ -185,8 +184,7 @@ class Map():
         # Set the actor properties
         self.points_actor.SetMapper(mapper)
         self.points_actor.GetProperty().SetColor(1.0, 0.0, 0.0)  # Red
-        self.points_actor.GetProperty().SetPointSize(3)
-
+        self.points_actor.GetProperty().SetPointSize(1)
     
     def display(self):
         if self.q is None:
@@ -204,7 +202,6 @@ class Map():
         # updating queue
         self.q.put((np.array(poses), np.array(pts)))
 
-
 class Point():
     #A point is a 3d point in the world
     # Each point is observed in multiple frames
@@ -217,7 +214,6 @@ class Point():
         self.id = len(mapp.points)
         #adds the points instance to the map's list of points
         mapp.points.append(self)
-
 
     def add_observation(self, frame, idx):
         self.frames.append(frame)

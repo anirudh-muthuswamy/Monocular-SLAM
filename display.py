@@ -8,7 +8,6 @@ class Display():
         self.window = sdl2.ext.Window("Monocular SLAM", size=(W, H))
         self.window.show()
         self.W, self.H = W, H
-        print("inside display constructor")
 
     def paint(self, img):
         img = cv2.resize(img, (self.W, self.H))
