@@ -95,11 +95,11 @@ def kill_all_processes_and_exit():
 if __name__ == "__main__":
     set_start_method('spawn')
 
-    calib_file_path = "/Users/anirudh/Desktop/robotics_github_folders/monocular_slam/dataset/sequences/00/calib.txt"
+    calib_file_path = "dataset/sequences/00/calib.txt"
     calib_lines = read_calibration_file(calib_file_path)
     intrinsic_matrix = extract_intrinsic_matrix(calib_lines, camera_id='P0')
     
-    img = cv2.imread("/Users/anirudh/Desktop/robotics_github_folders/monocular_slam/dataset/sequences/00/image_0/000000.png")
+    img = cv2.imread("dataset/sequences/00/image_0/000000.png")
     height, width = img.shape[:2]  # Get first two elements regardless of channels
     print("Width:", width)
     print("Height:", height)
