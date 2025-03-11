@@ -4,6 +4,7 @@ from pointmap import Map, Point
 from display import Display
 from extractor import Frame, match_frames, add_ones, denormalize
 from multiprocessing import set_start_method, active_children
+from utils import extract_intrinsic_matrix, read_calibration_file
 
 def triangulate(pose1, pose2, pts1, pts2):
     #initialize result array to store homogenous coordinates
@@ -93,21 +94,42 @@ def kill_all_processes_and_exit():
 
 if __name__ == "__main__":
     set_start_method('spawn')
-    #define the principle point offset or the optical center coordinates
-    W, H = 1920//2, 1080//2
-    #define the focal length
-    F=450
-    #define the intrinsic matrix and the inverse of the intrinsic matrix
-    K = np.array([[F, 0, W//2],
-                [0, F, H//2],
-                [0, 0, 1]])
-    Kinv = np.linalg.inv(K)
+
+    calib_file_path = "/Users/anirudh/Desktop/robotics_github_folders/monocular_slam/dataset/sequences/00/calib.txt"
+    calib_lines = read_calibration_file(calib_file_path)
+    intrinsic_matrix = extract_intrinsic_matrix(calib_lines, camera_id='P0')
+    
+    img = cv2.imread("/Users/anirudh/Desktop/robotics_github_folders/monocular_slam/dataset/sequences/00/image_0/000000.png")
+    height, width = img.shape[:2]  # Get first two elements regardless of channels
+    print("Width:", width)
+    print("Height:", height)
+    W = width
+    H = height
+    if intrinsic_matrix is not None:
+        print("Intrinsic Matrix (K):")
+        print(intrinsic_matrix)
+        K = intrinsic_matrix
+        Kinv = np.linalg.inv(K)
+    else:
+        print("Intrinsic matrix not found for the specified camera ID.")
+        #Default parameters
+        #define the principle point offset or the optical center coordinates
+        W, H = 1920//2, 1080//2
+        #define the focal length
+        F=450
+        #define the intrinsic matrix and the inverse of the intrinsic matrix
+        K = np.array([[F, 0, W//2],
+                    [0, F, H//2],
+                    [0, 0, 1]])
+        Kinv = np.linalg.inv(K)
 
     display = Display(W, H)
     mapp = Map()
     mapp.create_viewer()
 
-    cap = cv2.VideoCapture("videos/test_countryroad.mp4")
+    # cap = cv2.VideoCapture("videos/test_countryroad.mp4")
+    cap = cv2.VideoCapture("dataset/sequences/00/image_0/%06d.png")
+    cap.set(cv2.CAP_PROP_FPS, 10)  # Set to 10 FPS for testing
     while cap.isOpened():
         ret, frame = cap.read()
         if ret == True:
