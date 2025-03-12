@@ -193,7 +193,10 @@ class Map():
         poses, pts = [], []
         for f in self.frames:
             # updating pose
-            poses.append(f.pose)
+            pose = f.poseLeft
+            if pose.shape == (3, 4):  # Convert to 4x4 homogeneous
+                pose = np.vstack((pose, np.array([0, 0, 0, 1])))
+            poses.append(pose)
         
         for p in self.points:
             # updating map points
@@ -208,7 +211,6 @@ class Point():
     def __init__(self, mapp:Map, loc):
         self.frames = []
         self.pt = loc
-        self.idxs = []
 
         #assigns a uniqye id to the point based on num of points in the map
         self.id = len(mapp.points)
@@ -217,4 +219,4 @@ class Point():
 
     def add_observation(self, frame, idx):
         self.frames.append(frame)
-        self.idxs.append(idx)
+        frame.point_indices[idx] = self.id
