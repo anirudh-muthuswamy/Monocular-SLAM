@@ -178,15 +178,12 @@ def matchStereoFrames(f, calibrated = True):
     ret = ret[inliers]
     R1, R2, t = extractPosefromEssentialMatrix(E)
 
-    print("inliers:",len(inliers))
-
     return idxLeft[inliers], idxRight[inliers], R1, R2, t
 
 def match_frames(f1, f2):
     # k nearest neighbours matching on feature descriptors
     bf = cv2.BFMatcher(cv2.NORM_HAMMING)
     # matches contains pairs of matches (best match and second best match) for each feature
-    print(len(f1.desLeft), len(f2.desLeft))
     matches = bf.knnMatch(f1.desLeft, f2.desLeft, k=2)
 
     #applies Lowe's ratio test to filter out good matches based on 
@@ -213,12 +210,10 @@ def match_frames(f1, f2):
     # Fit matrix
     _, inliers = ransac((ret[:,0], # matched points from the first image
                              ret[:,1]), #matched points from the second image
-                             EssentialMatrixTransform,
+                             FundamentalMatrixTransform,
                              min_samples=8,
                              residual_threshold=0.005,
                              max_trials=200)
-    
-    print("inliers:",len(inliers))
 
     return idx1[inliers], idx2[inliers]
 

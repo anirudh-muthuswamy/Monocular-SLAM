@@ -45,8 +45,6 @@ def triangulate_points_stereo(R0, t0, R_set, t_set, pts1, pts2, first_frame=True
 
         print(R)
         print(t)
-        # print(R)
-        # print(t)
         
         # Second camera matrix P2 = [R|t]
         P2 = np.eye(4)  # Create 4x4 identity matrix
@@ -145,7 +143,6 @@ def process_frame(imgLeft, imgRight, prev_R=None, prev_t=None):
 
         # Add points to the map
         print("left idx:", len(idxLeft))
-        # add_to_map(imgLeft, currentFrame, pts_3d_euc, idxLeft)
 
         for i, p in enumerate(pts_3d_euc):
             #add 3d point p to map
@@ -162,6 +159,7 @@ def process_frame(imgLeft, imgRight, prev_R=None, prev_t=None):
 
         print("pts 3d euc:", pts_3d_euc.shape)
         print("after adding the first frame, num 3d points in map:", len(mapp.points))
+
         return best_R, best_t
     
     #ALL GOOD TILL HERE
@@ -223,12 +221,12 @@ def process_frame(imgLeft, imgRight, prev_R=None, prev_t=None):
         if len(new_idxLeft) > 0:
             # Triangulate new points
             
-            # new_pts_3d = triangulate(
-            #     K1, R_new, t_new, 
-            #     np.array(currentFrame.ptsLeft)[new_idxLeft], 
-            #     np.array(currentFrame.ptsRight)[new_idxRight]
-            # )
-            # new_pts_3d /= new_pts_3d[:, 3:]
+            new_pts_3d = triangulate(
+                K1, R_new, t_new, 
+                np.array(currentFrame.ptsLeft)[new_idxLeft], 
+                np.array(currentFrame.ptsRight)[new_idxRight]
+            )
+            new_pts_3d /= new_pts_3d[:, 3:]
             print(prev_R)
             print(prev_t)
 
