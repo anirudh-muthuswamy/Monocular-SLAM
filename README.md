@@ -2,6 +2,12 @@
 
 A lightweight monocular SLAM system that extracts ORB features, estimates camera motion, and reconstructs sparse 3D points. Future work includes pose graph optimization and loop closure detection.
 
+## 3D Pose in VTK
+![Image 1](readme_images/2d_tracking.png)
+
+## 2D ORB Features
+![Image 2](readme_images/3d_pose.png)
+
 ## Features
 
 - **Feature Extraction & Matching**
